@@ -13,10 +13,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 #}
-{
-  "domain": "{{ DOMAIN }}",
-  "data_dir": "{{ DATA_DIR }}",
-  "ui": {{ WEB_UI }},
-  "client_addr": "0.0.0.0",
-  "advertise_addr": "{{IP_ADDRESS}}"
-}
+[Unit]
+Description=Yorc service discovery agent
+Requires=network-online.target
+After=network.target
+
+[Service]
+User=yorc
+Group=yorc
+Restart=on-failure
+ExecStart={{INSTALL_DIR}}/yorc server -c {{CONFIG_DIR}}/config.yorc.yaml
+KillSignal=SIGINT
+TimeoutStopSec=360
+
+[Install]
+WantedBy=multi-user.target

@@ -14,25 +14,28 @@
 # limitations under the License.
 #
 
-- name: Connects consul agent to consul server
+- name: Install Yorc
   hosts: all
   strategy: free
-  become: yes
-  become_user: consul
+  become: true
   become_method: sudo
-  vars:
-    consul_wan_servers: []
   tasks:
-    - name: compute WAN servers
-      set_fact: 
-        consul_wan_servers: "{{ consul_wan_servers }} + [ '{{ hostvars[inventory_hostname][item] }}' ]"
-      with_items: "{{ hostvars[inventory_hostname]  }}"
-      when: item | match(TARGET_NODE+'_.*_SERVER_WAN_IP')
 
-    - name: Install servers config for consul
-      template: 
-        src: 4_wan_join.json.j2
-        dest: "{{CONFIG_DIR}}/4_wan_join.json"
+    - name: uninstall using pip
+      pip:
+        name: ansible
+        state: absent
+
+    - name: Load a variable file based on the OS type, or a default if not found. Using free-form to specify the file.
+      include_vars: "{{ item }}"
+      with_first_found:
+        - "{{ ansible_distribution }}.yml"
+        - "{{ ansible_os_family }}.yml"
     
-    - name: echo servers list
-      debug: msg="Consul server configured to connect to others servers [{{ consul_wan_servers | join(', ') }}] through WAN"
+    - name: uninstall prerequirements
+      package:
+        name: "{{item}}"
+        state: absent
+      with_items: "{{install_packages}}"
+    
+        

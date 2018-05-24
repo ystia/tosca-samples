@@ -14,25 +14,25 @@
 # limitations under the License.
 #
 
-- name: Connects consul agent to consul server
+- name: Install Yorc
   hosts: all
   strategy: free
-  become: yes
-  become_user: consul
+  become: true
   become_method: sudo
-  vars:
-    consul_wan_servers: []
   tasks:
-    - name: compute WAN servers
-      set_fact: 
-        consul_wan_servers: "{{ consul_wan_servers }} + [ '{{ hostvars[inventory_hostname][item] }}' ]"
-      with_items: "{{ hostvars[inventory_hostname]  }}"
-      when: item | match(TARGET_NODE+'_.*_SERVER_WAN_IP')
-
-    - name: Install servers config for consul
+    - name: Yorc config
       template: 
-        src: 4_wan_join.json.j2
-        dest: "{{CONFIG_DIR}}/4_wan_join.json"
-    
-    - name: echo servers list
-      debug: msg="Consul server configured to connect to others servers [{{ consul_wan_servers | join(', ') }}] through WAN"
+        src: config.yorc.yaml.j2
+        dest: "/tmp/yorc.d/01.config.yorc.yaml"
+        mode: "u=rw,g=rw,o=r"
+    - name: Assemble config file
+      assemble:
+        src: /tmp/yorc.d/
+        dest: /etc/yorc/config.yorc.yaml
+        owner: yorc
+        group: yorc
+        mode: "u=rw,g=rw,o=r"
+    - name: Delete config fragment directory
+      file:
+        path: /tmp/yorc.d/
+        state: absent

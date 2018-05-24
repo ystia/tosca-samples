@@ -14,25 +14,13 @@
 # limitations under the License.
 #
 
-- name: Connects consul agent to consul server
+- name: Stop Yorc
   hosts: all
   strategy: free
   become: yes
-  become_user: consul
   become_method: sudo
-  vars:
-    consul_wan_servers: []
   tasks:
-    - name: compute WAN servers
-      set_fact: 
-        consul_wan_servers: "{{ consul_wan_servers }} + [ '{{ hostvars[inventory_hostname][item] }}' ]"
-      with_items: "{{ hostvars[inventory_hostname]  }}"
-      when: item | match(TARGET_NODE+'_.*_SERVER_WAN_IP')
-
-    - name: Install servers config for consul
-      template: 
-        src: 4_wan_join.json.j2
-        dest: "{{CONFIG_DIR}}/4_wan_join.json"
-    
-    - name: echo servers list
-      debug: msg="Consul server configured to connect to others servers [{{ consul_wan_servers | join(', ') }}] through WAN"
+    - name: stop Yorc
+      systemd:
+        name: yorc
+        state: stopped
