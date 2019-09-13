@@ -23,10 +23,10 @@ metadata:
 
 description: |
   Basic job running a shell command without scheduler
-  
+
 imports:
   - tosca-normative-types:1.0.0-ALIEN20
-  - alien-base-types:2.2.0-SM6
+  - alien-base-types:2.2.0-SNAPSHOT
   - yorc-types:1.1.0
 
 node_types:
@@ -34,7 +34,7 @@ node_types:
   org.ystia.yorc.samples.job.noscheduler.SpawnJob:
     derived_from: org.alien4cloud.nodes.Job
     properties:
-      command: 
+      command:
         type: string
         required: true
     requirements:
@@ -42,7 +42,7 @@ node_types:
           capability: tosca.capabilities.Container
           node: tosca.nodes.Compute
           relationship: tosca.relationships.HostedOn
-          occurrences: [1, 1] 
+          occurrences: [1, 1]
     attributes:
       commandSpawned: { get_operation_output: [SELF, tosca.interfaces.node.lifecycle.Runnable, submit, COMMAND_SPAWNED] }
       commandStdout: { get_operation_output: [SELF, tosca.interfaces.node.lifecycle.Runnable, run, COMMAND_STDOUT] }
@@ -63,12 +63,12 @@ node_types:
           capability: tosca.capabilities.Node
           node: org.ystia.yorc.samples.job.noscheduler.SpawnJob
           relationship: org.ystia.yorc.samples.relationships.noscheduler.DisplayResult
-          occurrences: [1, UNBOUNDED] 
+          occurrences: [1, UNBOUNDED]
       - host:
           capability: tosca.capabilities.Container
           node: tosca.nodes.Compute
           relationship: tosca.relationships.HostedOn
-          occurrences: [1, 1] 
+          occurrences: [1, 1]
     attributes:
       results: { get_operation_output: [SELF, tosca.interfaces.node.lifecycle.Runnable, run, COMMAND_STDOUT] }
     interfaces:

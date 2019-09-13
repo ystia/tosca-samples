@@ -9,7 +9,7 @@ description: ""
 
 imports:
   - tosca-normative-types:1.0.0-ALIEN20
-  - docker-types:2.2.0-SM6
+  - docker-types:2.2.0-SNAPSHOT
   - org.ystia.yorc.samples.kube.jobs:1.0.0-SNAPSHOT
 
 topology_template:
@@ -30,13 +30,13 @@ topology_template:
     ComputeBashLoop:
       type: org.ystia.yorc.samples.kube.containers.nodes.ComputeBashLoop
       properties:
-        docker_run_cmd: 
+        docker_run_cmd:
           - "/bin/bash"
           - "-c"
           - "for d in $(seq 1 15); do echo $d; sleep $d; done; echo 'Computation done!';"
         cpu_share: 1.0
         mem_share: "128 MB"
-        docker_bash_cmd: 
+        docker_bash_cmd:
           - "/bin/bash"
           - "-c"
       requirements:

@@ -12,7 +12,7 @@ description: |
 imports:
   - yorc-types:1.1.0
   - tosca-normative-types:1.0.0-ALIEN20
-  - alien-base-types:2.2.0-SM6
+  - alien-base-types:2.2.0-SNAPSHOT
   - org.ystia.yorc.samples.job.noscheduler.Components:1.0.0-SNAPSHOT
 
 topology_template:
@@ -102,7 +102,7 @@ topology_template:
       value: { get_attribute: [ DisplayResJob, results ] }
   # Workaround for bug https://github.com/ystia/yorc/issues/435 :
   # calling explicitly the relationship configure operation 'target_changed'
-  # until Yorc is able to call it automatically each time the target changes 
+  # until Yorc is able to call it automatically each time the target changes
   workflows:
     run:
       steps:

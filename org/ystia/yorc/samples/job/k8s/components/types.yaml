@@ -7,7 +7,7 @@ metadata:
 
 imports:
   - tosca-normative-types:1.0.0-ALIEN20
-  - docker-types:2.2.0-SM6
+  - docker-types:2.2.0-SNAPSHOT
 
 description: Contains types for testing Jobs in Kubernetes
 
@@ -22,7 +22,7 @@ node_types:
     properties:
       docker_run_cmd:
         type: list
-        entry_schema: 
+        entry_schema:
           type: string
         default: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
     interfaces:
@@ -38,7 +38,7 @@ node_types:
     properties:
       docker_run_cmd:
         type: list
-        entry_schema: 
+        entry_schema:
           type: string
         default: ["/bin/bash",  "-c", "for d in $(seq 1 15); do echo $d; sleep $d; done; echo 'Computation done!';"]
     interfaces:
@@ -54,7 +54,7 @@ node_types:
     properties:
       docker_run_cmd:
         type: list
-        entry_schema: 
+        entry_schema:
           type: string
         default: ["/bin/bash",  "-c", "sleep 10; >&2 echo 'Computation Failed!'; exit 1"]
     interfaces:
