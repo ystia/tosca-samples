@@ -192,7 +192,7 @@ topology_template:
             capability: org.alien4cloud.capabilities.DockerVolumeAttachment
             relationship: org.alien4cloud.relationships.MountDockerVolume
             properties:
-              container_path: "/mnt/certs/svc_account.json"
+              container_path: "/mnt/certs/"
         - hostedOnGcpPublisherJobHost:
             type_requirement: host
             node: GCPPublisherJob
