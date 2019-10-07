@@ -1,0 +1,91 @@
+tosca_definitions_version: alien_dsl_2_0_0
+
+metadata:
+  template_name: org.ystia.yorc.samples.text-count-demo.jobs
+  template_version: 1.0.0-SNAPSHOT
+  template_author: Yorc team
+
+imports:
+  - tosca-normative-types:1.0.0-ALIEN20
+  - docker-types:2.2.0-SNAPSHOT
+
+description: Contains types for testing Jobs on Kubernetes & Slurm/Singularity
+
+repositories:
+  docker:
+    url: https://hub.docker.com/
+    type: a4c_ignore
+
+node_types:
+  org.ystia.yorc.samples.text-count-demo.nodes.WebScraper:
+    derived_from: tosca.nodes.Container.Application.DockerContainer
+    properties:
+      file_url:
+        type: string
+        description: URL of the file to download
+        required: true
+        constraints:
+          - pattern: "https?://.+"
+      docker_run_args:
+        type: list
+        entry_schema:
+          type: string
+        default: ["-c",  "curl \"${DL_URL}\" -o /mnt/data/init_file.txt"]
+      docker_run_cmd:
+        type: string
+        required: false
+        description: Docker run command. Will override the Dockerfile CMD statement.
+        default: "/bin/sh"
+    interfaces:
+      Standard:
+        create:
+          inputs:
+            ENV_DL_URL: { get_property: [SELF, file_url]}
+          implementation:
+            file: governmentpaas/curl-ssl:latest
+            repository: docker
+            type: tosca.artifacts.Deployment.Image.Container.Docker
+
+  org.ystia.yorc.samples.text-count-demo.nodes.ComputeJobs:
+    derived_from: tosca.nodes.Container.Application.DockerContainer
+    interfaces:
+      Standard:
+        create:
+          implementation:
+            file: alpine:3.10.2
+            repository: docker
+            type: tosca.artifacts.Deployment.Image.Container.Docker
+
+  org.ystia.yorc.samples.text-count-demo.nodes.GCPBucketPublisher:
+    derived_from: tosca.nodes.Container.Application.DockerContainer
+    properties:
+      project_name:
+        type: string
+        description: Name of the GCP project where results are stored
+        required: true
+      bucket_name:
+        type: string
+        description: Name of the GCP Storage Bucket
+        required: true
+        constraints:
+          - pattern: "[-a-zA-Z0-9_]+"
+      docker_run_args:
+        type: list
+        entry_schema:
+          type: string
+        default: ["-c",  "gcloud auth activate-service-account --key-file /mnt/certs/svc_account.json || { echo \"GCP login failed\"; exit 1; }; gsutil mb gs://${BUCKET_NAME}; gsutil cp /mnt/data/result*.txt gs://${BUCKET_NAME}/results && rm /mnt/data/result*.txt /mnt/data/init_file.txt"]
+      docker_run_cmd:
+        type: string
+        required: false
+        description: Docker run command. Will override the Dockerfile CMD statement.
+        default: "/bin/bash"
+    interfaces:
+      Standard:
+        create:
+          inputs:
+            ENV_CLOUDSDK_CORE_PROJECT: { get_property: [SELF, project_name]}
+            ENV_BUCKET_NAME: { get_property: [SELF, bucket_name]}
+          implementation:
+            file: "google/cloud-sdk:265.0.0"
+            repository: docker
+            type: tosca.artifacts.Deployment.Image.Container.Docker

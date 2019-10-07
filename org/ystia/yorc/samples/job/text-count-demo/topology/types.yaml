@@ -1,0 +1,200 @@
+tosca_definitions_version: alien_dsl_2_0_0
+
+metadata:
+  template_name: org.ystia.yorc.samples.text-count-demo.topology.GcpDemo
+  template_version: 1.0.0-SNAPSHOT
+  template_author: admin
+
+description: ""
+
+imports:
+  - tosca-normative-types:1.0.0-ALIEN20
+  - docker-types:2.2.0-SNAPSHOT
+  - org.ystia.yorc.samples.text-count-demo.jobs:1.0.0-SNAPSHOT
+
+topology_template:
+  node_templates:
+    ScrapJob:
+      metadata:
+        a4c_edit_x: 716
+        a4c_edit_y: "-133"
+      type: org.alien4cloud.extended.container.types.ContainerJobUnit
+    ScrapJobRuntime:
+      type: org.alien4cloud.extended.container.types.ContainerRuntime
+      requirements:
+        - hostedOnScrapJobHost:
+            type_requirement: host
+            node: ScrapJob
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+    WebScraper:
+      type: org.ystia.yorc.samples.text-count-demo.nodes.WebScraper
+      properties:
+        file_url: "https://raw.githubusercontent.com/ystia/yorc/develop/CHANGELOG.md"
+      requirements:
+        - hostedOnContainerRuntimeScrapJobRuntimeHost:
+            type_requirement: host
+            node: ScrapJobRuntime
+            capability: org.alien4cloud.extended.container.capabilities.ApplicationHost
+            relationship: org.alien4cloud.extended.container.relationships.HostedOnContainerRuntime
+    SharedVolumeScrap:
+      type: org.alien4cloud.nodes.DockerExtVolume
+      requirements:
+        - hostedOnScrapJobHost:
+            type_requirement: host
+            node: ScrapJob
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+        - mountDockerVolumeWebScraperAttach:
+            type_requirement: attachment
+            node: WebScraper
+            capability: org.alien4cloud.capabilities.DockerVolumeAttachment
+            relationship: org.alien4cloud.relationships.MountDockerVolume
+            properties:
+              container_path: "/mnt/data"
+    SharedVolumeWords:
+      type: org.alien4cloud.nodes.DockerExtVolume
+      requirements:
+        - hostedOnWordCountJobHost:
+            type_requirement: host
+            node: WordsCountJob
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+        - mountDockerVolumeWordCountAttach:
+            type_requirement: attachment
+            node: WordsCount
+            capability: org.alien4cloud.capabilities.DockerVolumeAttachment
+            relationship: org.alien4cloud.relationships.MountDockerVolume
+            properties:
+              container_path: "/mnt/data"
+    WordsCountJob:
+      metadata:
+        a4c_edit_x: 440
+        a4c_edit_y: "-283"
+      type: org.alien4cloud.extended.container.types.ContainerJobUnit
+    WordsCountRuntime:
+      type: org.alien4cloud.extended.container.types.ContainerRuntime
+      requirements:
+        - hostedOnWordCountJobHost:
+            type_requirement: host
+            node: WordsCountJob
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+    WordsCount:
+      type: org.ystia.yorc.samples.text-count-demo.nodes.ComputeJobs
+      requirements:
+        - hostedOnContainerRuntimeWordCountRuntimeHost:
+            type_requirement: host
+            node: WordsCountRuntime
+            capability: org.alien4cloud.extended.container.capabilities.ApplicationHost
+            relationship: org.alien4cloud.extended.container.relationships.HostedOnContainerRuntime
+        - dependsOnWebScraperFeature:
+            type_requirement: dependency
+            node: WebScraper
+            capability: tosca.capabilities.Node
+            relationship: tosca.relationships.DependsOn
+    LinesCountJob:
+      metadata:
+        a4c_edit_x: 440
+        a4c_edit_y: 23
+      type: org.alien4cloud.extended.container.types.ContainerJobUnit
+    LinesCountRuntime:
+      type: org.alien4cloud.extended.container.types.ContainerRuntime
+      requirements:
+        - hostedOnLineCountJobHost:
+            type_requirement: host
+            node: LinesCountJob
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+    SharedVolumeLines:
+      type: org.alien4cloud.nodes.DockerExtVolume
+      requirements:
+        - hostedOnLineCountJobHost:
+            type_requirement: host
+            node: LinesCountJob
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+        - mountDockerVolumeLinesCountAttach:
+            type_requirement: attachment
+            node: LinesCount
+            capability: org.alien4cloud.capabilities.DockerVolumeAttachment
+            relationship: org.alien4cloud.relationships.MountDockerVolume
+            properties:
+              container_path: "/mnt/data"
+    LinesCount:
+      type: org.ystia.yorc.samples.text-count-demo.nodes.ComputeJobs
+      requirements:
+        - dependsOnWebScraperFeature:
+            type_requirement: dependency
+            node: WebScraper
+            capability: tosca.capabilities.Node
+            relationship: tosca.relationships.DependsOn
+        - hostedOnContainerRuntimeContainerRuntimeHost:
+            type_requirement: host
+            node: LinesCountRuntime
+            capability: org.alien4cloud.extended.container.capabilities.ApplicationHost
+            relationship: org.alien4cloud.extended.container.relationships.HostedOnContainerRuntime
+    GCPPublisherJob:
+      metadata:
+        a4c_edit_x: "-33"
+        a4c_edit_y: "-113"
+      type: org.alien4cloud.extended.container.types.ContainerJobUnit
+    GCPPublisherRuntime:
+      type: org.alien4cloud.extended.container.types.ContainerRuntime
+      requirements:
+        - hostedOnGcpPublisherJobHost:
+            type_requirement: host
+            node: GCPPublisherJob
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+    GCPBucketPublisher:
+      type: org.ystia.yorc.samples.text-count-demo.nodes.GCPBucketPublisher
+      properties:
+        project_name: "atos-codexai-dev"
+        bucket_name: "atos-codexai-dev-portable-jobs-demo-slurm"
+      requirements:
+        - hostedOnContainerRuntimeGcpPublisherRuntimeHost:
+            type_requirement: host
+            node: GCPPublisherRuntime
+            capability: org.alien4cloud.extended.container.capabilities.ApplicationHost
+            relationship: org.alien4cloud.extended.container.relationships.HostedOnContainerRuntime
+        - dependsOnLinesCountFeature:
+            type_requirement: dependency
+            node: LinesCount
+            capability: tosca.capabilities.Node
+            relationship: tosca.relationships.DependsOn
+        - dependsOnWordsCountFeature:
+            type_requirement: dependency
+            node: WordsCount
+            capability: tosca.capabilities.Node
+            relationship: tosca.relationships.DependsOn
+    SharedVolumeGCPPub:
+      type: org.alien4cloud.nodes.DockerExtVolume
+      requirements:
+        - mountDockerVolumeGcpBucketPublisherAttach:
+            type_requirement: attachment
+            node: GCPBucketPublisher
+            capability: org.alien4cloud.capabilities.DockerVolumeAttachment
+            relationship: org.alien4cloud.relationships.MountDockerVolume
+            properties:
+              container_path: "/mnt/data"
+        - hostedOnGcpPublisherJobHost:
+            type_requirement: host
+            node: GCPPublisherJob
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+    GCPSecret:
+      type: org.alien4cloud.nodes.DockerExtVolume
+      requirements:
+        - mountDockerVolumeGcpBucketPublisherAttach:
+            type_requirement: attachment
+            node: GCPBucketPublisher
+            capability: org.alien4cloud.capabilities.DockerVolumeAttachment
+            relationship: org.alien4cloud.relationships.MountDockerVolume
+            properties:
+              container_path: "/mnt/certs/svc_account.json"
+        - hostedOnGcpPublisherJobHost:
+            type_requirement: host
+            node: GCPPublisherJob
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
