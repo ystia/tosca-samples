@@ -82,6 +82,11 @@ topology_template:
             relationship: tosca.relationships.HostedOn
     WordsCount:
       type: org.ystia.yorc.samples.text-count-demo.nodes.ComputeJobs
+      properties:
+        docker_run_args:
+          - "-c"
+          - "wc -w /mnt/data/init_file.txt > /mnt/data/result-words-count.txt"
+        docker_run_cmd: "/bin/sh"
       requirements:
         - hostedOnContainerRuntimeWordCountRuntimeHost:
             type_requirement: host
@@ -123,6 +128,11 @@ topology_template:
               container_path: "/mnt/data"
     LinesCount:
       type: org.ystia.yorc.samples.text-count-demo.nodes.ComputeJobs
+      properties:
+        docker_run_args:
+          - "-c"
+          - "wc -l /mnt/data/init_file.txt > /mnt/data/result-lines-count.txt"
+        docker_run_cmd: "/bin/sh"
       requirements:
         - dependsOnWebScraperFeature:
             type_requirement: dependency
