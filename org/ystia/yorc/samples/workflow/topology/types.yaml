@@ -1,0 +1,53 @@
+tosca_definitions_version: alien_dsl_2_0_0
+
+metadata:
+  template_name: GreetingsApp
+  template_version: 0.1.0-SNAPSHOT
+  template_author: admin
+
+description: ""
+
+imports:
+  - tosca-normative-types:1.0.0-ALIEN20
+  - org.ystia.yorc.samples.Greetings:1.0.0-SNAPSHOT
+
+topology_template:
+  node_templates:
+    VirtualMachine:
+      type: tosca.nodes.Compute
+      capabilities:
+        scalable:
+          properties:
+            min_instances: 1
+            max_instances: 1
+            default_instances: 1
+        endpoint:
+          properties:
+            secure: true
+            protocol: tcp
+            network_name: PRIVATE
+            initiator: source
+    GreetingsComponent:
+      type: org.ystia.yorc.samples.GreetingsComponentType
+      requirements:
+        - hostedOnVirtualMachineHost:
+            type_requirement: host
+            node: VirtualMachine
+            capability: tosca.capabilities.Container
+            relationship: tosca.relationships.HostedOn
+  workflows:
+    greet:
+      inputs:
+        user:
+          type: string
+      steps:
+        GreetingsComponent_say_goodbye:
+          target: GreetingsComponent
+          activities:
+            - call_operation: custom.say_goodbye
+        GreetingsComponent_say_hello:
+          target: GreetingsComponent
+          activities:
+            - call_operation: custom.say_hello
+          on_success:
+            - GreetingsComponent_say_goodbye
