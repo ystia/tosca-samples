@@ -37,7 +37,8 @@ node_types:
           implementation: scripts/noop.sh
       custom:
         inputs:
-          greetings_user: {get_input: user}
+          greetings_user:
+            type: string
         say_hello:
           implementation: scripts/hello.sh
         say_goodbye:

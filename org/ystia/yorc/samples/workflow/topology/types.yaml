@@ -29,6 +29,9 @@ topology_template:
             initiator: source
     GreetingsComponent:
       type: org.ystia.yorc.samples.GreetingsComponentType
+      interfaces:
+        custom:
+          greetings_user: {get_input: user}
       requirements:
         - hostedOnVirtualMachineHost:
             type_requirement: host
