@@ -54,3 +54,22 @@ topology_template:
             - call_operation: custom.say_hello
           on_success:
             - GreetingsComponent_say_goodbye
+    create_wf:
+      steps:
+        install_step:
+          target: GreetingsComponent
+          activities:
+            - call_operation: Standard.create
+          on_success:
+            - start_step
+        start_step:
+          target: GreetingsComponent
+          activities:
+            - call_operation: Standard.start
+    inline_wf:
+      steps:
+        inline_step:
+          target: GreetingsComponent
+          activities:
+            - inline: create_wf
+
