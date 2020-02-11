@@ -13,5 +13,5 @@ A4C can use the Yorc Orchestrator to deploy the Yorc&Consul to a Container Orche
 ## Usage
 
 Check used versions, and if necessary modify them correspondingly to your needs. 
-Create a zip file with the types.yaml and upload it to the SA's Catalog.
+Create a zip file with the types.yaml and upload it to the A4C's Catalog.
   
