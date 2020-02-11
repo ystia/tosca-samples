@@ -1,15 +1,15 @@
 tosca_definitions_version: alien_dsl_2_0_0
 
 metadata:
-  template_name: org.ystia.yorc.samples.kube.yorc
+  template_name: org.ystia.yorc.samples.kube.yorcconsul
   template_version: 1.0.0-SNAPSHOT
   template_author: Yorc team
 
 imports:
   - tosca-normative-types:1.0.0-ALIEN20
-  - docker-types:2.2.0-SNAPSHOT
+  - docker-types:2.2.0-SM10
 
-description: Yorc Docker that can be deployed on K8S
+description: Yorc & Consul Docker that can be deployed on K8S
 
 repositories:
   docker:
@@ -47,7 +47,7 @@ node_types:
             ENV_CONSUL_ENV_ui: { get_property: [SELF, consul_ui] }
             ENV_CONSUL_ENV_client_addr: '"0.0.0.0"'
           implementation:
-            file: ystia/yorc:3.0.2
+            file: ystia/yorc
             repository: docker
             type: tosca.artifacts.Deployment.Image.Container.Docker
 

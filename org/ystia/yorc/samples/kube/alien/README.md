@@ -12,5 +12,6 @@ The SA can use the Yorc Orchestrator to deploy the TA to a Container Orchestrato
 
 ## Usage
 
+Check used versions, and if necessary modify them correspondingly to your needs.
 Create a zip file with the types.yaml and upload it to the SA's Catalog.
   
