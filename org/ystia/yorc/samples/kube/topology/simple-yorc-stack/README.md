@@ -77,6 +77,3 @@ May check Consul K/V base using Port forwarding on consul-ui TargetPort from yor
 ## Known Issues
 
 Need to fix **targetPort** values in the exposed  Service Ports (change the generated string value by the port number)
-
-
-- 
