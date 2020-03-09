@@ -1,7 +1,7 @@
 tosca_definitions_version: alien_dsl_2_0_0
 
 metadata:
-  template_name: GreetingsApp
+  template_name: WorkflowInputOutput
   template_version: 0.1.0-SNAPSHOT
   template_author: admin
 
@@ -9,7 +9,7 @@ description: ""
 
 imports:
   - tosca-normative-types:1.0.0-ALIEN20
-  - org.ystia.yorc.samples.Greetings:1.0.0-SNAPSHOT
+  - org.ystia.yorc.samples.ComputePI:1.0.0-SNAPSHOT
 
 topology_template:
   node_templates:
@@ -27,11 +27,12 @@ topology_template:
             protocol: tcp
             network_name: PRIVATE
             initiator: source
-    GreetingsComponent:
-      type: org.ystia.yorc.samples.GreetingsComponentType
+    PiComponent:
+      type: org.ystia.yorc.samples.ComputePIComponentType
       interfaces:
         custom:
-          greetings_user: {get_input: user}
+          inputs:
+            decimal: {get_input: precision}
       requirements:
         - hostedOnVirtualMachineHost:
             type_requirement: host
@@ -39,37 +40,30 @@ topology_template:
             capability: tosca.capabilities.Container
             relationship: tosca.relationships.HostedOn
   workflows:
-    greet:
+    compute_pi:
       inputs:
-        user:
-          type: string
+        precision:
+          type: int
+          required: true
+      outputs:
+        pi:
+          description: PI computation result
+          value: { get_attribute: [ PiComponent, result ] }
       steps:
-        GreetingsComponent_say_goodbye:
-          target: GreetingsComponent
+        PiComponent_compute_pi:
+          target: PiComponent
           activities:
-            - call_operation: custom.say_goodbye
-        GreetingsComponent_say_hello:
-          target: GreetingsComponent
-          activities:
-            - call_operation: custom.say_hello
-          on_success:
-            - GreetingsComponent_say_goodbye
-    create_wf:
-      steps:
-        install_step:
-          target: GreetingsComponent
-          activities:
-            - call_operation: Standard.create
-          on_success:
-            - start_step
-        start_step:
-          target: GreetingsComponent
-          activities:
-            - call_operation: Standard.start
-    inline_wf:
+            - call_operation: custom.compute_pi
+    compute_pi_inline:
+      outputs:
+        pi:
+          description: PI computation result
+          value: { get_attribute: [ PiComponent, result ] }
       steps:
         inline_step:
-          target: GreetingsComponent
+          target: PiComponent
           activities:
-            - inline: create_wf
-
+            - inline:
+                workflow: compute_pi
+                inputs:
+                  precision: 4

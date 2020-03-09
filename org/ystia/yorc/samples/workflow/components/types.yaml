@@ -1,6 +1,6 @@
 tosca_definitions_version: alien_dsl_2_0_0
 #
-# Copyright 2018 Bull S.A.S. Atos Technologies - Bull, Rue Jean Jaures, B.P.68, 78340, Les Clayes-sous-Bois, France.
+# Copyright 2020 Bull S.A.S. Atos Technologies - Bull, Rue Jean Jaures, B.P.68, 78340, Les Clayes-sous-Bois, France.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@ tosca_definitions_version: alien_dsl_2_0_0
 # limitations under the License.
 #
 
-
 metadata:
-  template_name: org.ystia.yorc.samples.Greetings
+  template_name: org.ystia.yorc.samples.ComputePI
   template_version: 1.0.0-SNAPSHOT
   template_author: yorc
+
 
 imports:
   - tosca-normative-types:1.0.0-ALIEN20
@@ -37,9 +37,27 @@ node_types:
           implementation: scripts/noop.sh
       custom:
         inputs:
-          greetings_user:
-            type: string
-        say_hello:
-          implementation: scripts/hello.sh
-        say_goodbye:
-          implementation: scripts/goodbye.sh
+node_types:
+  org.ystia.yorc.samples.ComputePIComponentType:
+    description: "Sample component to compute PI"
+    derived_from: tosca.nodes.SoftwareComponent
+    attributes:
+      result:
+        type: float
+        description: "The result of PI calculation"
+    tags:
+      icon: "/images/python.png"
+    interfaces:
+      Standard:
+        create:
+          implementation: scripts/noop.sh
+        start:
+          implementation: scripts/noop.sh
+      custom:
+        inputs:
+          decimal:
+            type: int
+        compute_pi:
+          outputs:
+            result: [SELF, result]
+          implementation: scripts/compute_pi.py
