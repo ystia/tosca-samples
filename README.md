@@ -4,7 +4,7 @@ This directory contains TOSCA components used to test or demonstrates Yorc featu
 
 For setting up Alien4Cloud and Yorc please refer to our documentation.
 
-You can import them using [the git import feature of Alien 4 Cloud](http://alien4cloud.github.io/#/documentation/2.0.0/getting_started/new_getting_started.html)
+You can import them using [the git import feature of Alien 4 Cloud](http://alien4cloud.github.io/#/documentation/2.2.0/getting_started/new_getting_started.html)
 or alternatively you can zip all components with the following command:
 
 ```bash
