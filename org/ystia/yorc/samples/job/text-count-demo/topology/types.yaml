@@ -9,7 +9,7 @@ description: ""
 
 imports:
   - tosca-normative-types:1.0.0-ALIEN20
-  - docker-types:2.2.0-SNAPSHOT
+  - docker-types:2.2.0
   - org.ystia.yorc.samples.text-count-demo.jobs:1.0.0-SNAPSHOT
 
 topology_template:
