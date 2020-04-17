@@ -10,14 +10,14 @@ description: "Test Apache exposed as service on k8s"
 imports:
   - tosca-normative-types:1.0.0-ALIEN20
   - org.ystia.yorc.samples.kube.apache:1.0.0-SNAPSHOT
-  - docker-types:2.2.0-SNAPSHOT
+  - docker-types:2.2.0
 
 topology_template:
   node_templates:
     Container:
       type: org.alien4cloud.extended.container.types.ContainerRuntime
     Apache:
-      type: org.ystia.yorc.samples.kube.containers.nodes.Apache
+      type: org.ystia.yorc.samples.kube.apache.nodes.Apache
       requirements:
         - hostedOnContainerRuntimeContainer:
             type_requirement: host

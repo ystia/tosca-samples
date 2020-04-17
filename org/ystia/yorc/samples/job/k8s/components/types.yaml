@@ -7,7 +7,7 @@ metadata:
 
 imports:
   - tosca-normative-types:1.0.0-ALIEN20
-  - docker-types:2.2.0-SNAPSHOT
+  - docker-types:2.2.0
 
 description: Contains types for testing Jobs in Kubernetes
 
@@ -21,10 +21,13 @@ node_types:
     derived_from: tosca.nodes.Container.Application.DockerContainer
     properties:
       docker_run_cmd:
+        type: string
+        default: "perl"
+      docker_run_args:
         type: list
         entry_schema:
           type: string
-        default: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+        default: ["-Mbignum=bpi", "-wle", "print bpi(2000)"]
     interfaces:
       Standard:
         create:
@@ -37,10 +40,13 @@ node_types:
     derived_from: tosca.nodes.Container.Application.DockerContainer
     properties:
       docker_run_cmd:
+        type: string
+        default: "/bin/bash"
+      docker_run_args:
         type: list
         entry_schema:
           type: string
-        default: ["/bin/bash",  "-c", "for d in $(seq 1 15); do echo $d; sleep $d; done; echo 'Computation done!';"]
+        default: ["-c", "for d in $(seq 1 15); do echo $d; sleep $d; done; echo 'Computation done!';"]
     interfaces:
       Standard:
         create:
@@ -53,14 +59,53 @@ node_types:
     derived_from: tosca.nodes.Container.Application.DockerContainer
     properties:
       docker_run_cmd:
+        type: string
+        default: "/bin/bash"
+      docker_run_args:
         type: list
         entry_schema:
           type: string
-        default: ["/bin/bash",  "-c", "sleep 10; >&2 echo 'Computation Failed!'; exit 1"]
+        default: ["-c", "sleep 10; >&2 echo 'Computation Failed!'; exit 1"]
     interfaces:
       Standard:
         create:
           implementation:
             file: "yikaus/alpine-bash:latest"
+            repository: docker
+            type: tosca.artifacts.Deployment.Image.Container.Docker
+
+  org.ystia.yorc.samples.kube.containers.nodes.Downloader:
+    derived_from: tosca.nodes.Container.Application.DockerContainer
+    properties:
+      file_path:
+        type: string
+        description: URL of the file to download
+        required: false
+        default: "/"
+      docker_run_args:
+        type: list
+        entry_schema:
+          type: string
+        default: ["-c",  "curl \"http://${DL_IP}:${DL_PORT}${DL_PATH}\" -o /mnt/data/init_file.txt"]
+      docker_run_cmd:
+        type: string
+        required: false
+        description: Docker run command. Will override the Dockerfile CMD statement.
+        default: "/bin/sh"
+    requirements:
+      - http_endpoint:
+          capability: tosca.capabilities.Endpoint
+          relationship: tosca.relationships.ConnectsTo
+          occurrences: [1, 1]
+    interfaces:
+      Standard:
+        create:
+          inputs:
+            ENV_DL_IP: { get_attribute: [R_TARGET, http_endpoint, ip_address] }
+            ENV_DL_PORT: { get_attribute: [R_TARGET, http_endpoint, port] }
+            ENV_DL_PATH: { get_property: [SELF, file_path] }
+            # ENV_DL_URL: { concat: [ "http://", get_attribute: [R_TARGET, http_endpoint, ip_address], ":", get_property: [R_TARGET, http_endpoint, port], "/", get_property: [SELF, file_path]]}
+          implementation:
+            file: governmentpaas/curl-ssl:latest
             repository: docker
             type: tosca.artifacts.Deployment.Image.Container.Docker
