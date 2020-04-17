@@ -17,7 +17,7 @@ topology_template:
     Container:
       type: org.alien4cloud.extended.container.types.ContainerRuntime
     Apache:
-      type: org.ystia.yorc.samples.kube.containers.nodes.Apache
+      type: org.ystia.yorc.samples.kube.apache.nodes.Apache
       requirements:
         - hostedOnContainerRuntimeContainer:
             type_requirement: host
