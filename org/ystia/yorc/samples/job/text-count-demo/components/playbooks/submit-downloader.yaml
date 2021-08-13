@@ -1,0 +1,26 @@
+- name: Create
+  hosts: all
+  strategy: free
+  become: true
+
+  tasks:
+    - name: Download lines count
+      gc_storage:
+        bucket: "{{BUCKET_NAME}}"
+        object: "results/result-lines-count.txt"
+        dest: /var/www/html/results/result-lines-count.txt
+        mode: get
+        gs_access_key: "{{GS_ACCESS_KEY}}"
+        gs_secret_key: "{{GS_SECRET_KEY}}"
+    - name: Download words count
+      gc_storage:
+        bucket: "{{BUCKET_NAME}}"
+        object: "results/result-words-count.txt"
+        dest: /var/www/html/results/result-words-count.txt
+        mode: get
+        gs_access_key: "{{GS_ACCESS_KEY}}"
+        gs_secret_key: "{{GS_SECRET_KEY}}"
+
+    - name: Set JobID
+      set_fact:
+        TOSCA_JOB_ID: "1"

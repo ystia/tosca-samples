@@ -1,0 +1,9 @@
+- name: Create
+  hosts: all
+  strategy: free
+  become: true
+
+  tasks:
+    - name: Set fact OK
+      set_fact:
+        TOSCA_JOB_STATUS: "COMPLETED"

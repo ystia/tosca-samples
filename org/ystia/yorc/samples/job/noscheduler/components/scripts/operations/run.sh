@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+export PATH=$PATH:/bin:/usr/bin:/usr/local/bin
+
 TOSCA_JOB_STATUS="COMPLETED"
 COMMAND_STDOUT=""
 COMMAND_STDERR=""
@@ -13,14 +15,14 @@ if [ "$res" -ne "2" ];then
 else
   JOB_ID="${array[0]}"
   JOB_TIMESTAMP="${array[1]}"
-  if /usr/bin/ps -p $JOB_ID > /dev/null
+  if ps -p $JOB_ID > /dev/null
   then
     TOSCA_JOB_STATUS="RUNNING"
   else
     # Job done.
     # Retrieving outputs
     if [ -f /tmp/stdout_job_$JOB_TIMESTAMP ]; then
-      COMMAND_STDOUT=`/usr/bin/cat /tmp/stdout_job_$JOB_TIMESTAMP`
+      COMMAND_STDOUT=`cat /tmp/stdout_job_$JOB_TIMESTAMP`
       if [ -n "$COMMAND_STDOUT" ]; then
         echo "Job output: $COMMAND_STDOUT"
       fi
@@ -28,7 +30,7 @@ else
 
     # Considering the job failed if there are error logs
     if [ -f /tmp/stderr_job_$JOB_TIMESTAMP ]; then
-      COMMAND_STDERR=`/usr/bin/cat /tmp/stderr_job_$JOB_TIMESTAMP`
+      COMMAND_STDERR=`cat /tmp/stderr_job_$JOB_TIMESTAMP`
       if [ -n "$COMMAND_STDERR" ]; then
         TOSCA_JOB_STATUS="FAILED"
         echo "Job errors: $COMMAND_STDERR"
