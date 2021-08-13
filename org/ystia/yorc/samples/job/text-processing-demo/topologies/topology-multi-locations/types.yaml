@@ -1,0 +1,177 @@
+tosca_definitions_version: alien_dsl_2_0_0
+
+metadata:
+  template_name: TextProcessingMultiLocationDemo
+  template_version: 0.1.0-SNAPSHOT
+  template_author: admin
+
+description: |
+  This topology demonstrate how to execute a standard workflow with pre-processing / processing / post-processing and results publishing.
+  This topology is totally portable it contains jobs modeled as containers jobs and a generic ansible implementation of job.
+  The typical use case is to perform pre and post processing on Kubernetes and processing on Slurm.
+  Data publishing could be done on any cloud or hostspool infrastructure. But as it uses GCP buckets it is easiest to run
+  it on GCP.
+
+imports:
+  - yorc-types:1.1.0
+  - tosca-normative-types:1.0.0-ALIEN20
+  - docker-types:3.0.0
+  - alien-base-types:3.0.0
+  - org.ystia.yorc.samples.text-processing-demo:1.0.0-SNAPSHOT
+
+topology_template:
+  inputs:
+    file_url:
+      type: string
+      required: true
+      description: "URL of the file to download"
+      constraints:
+        - pattern: "https?://.+"
+    secret_key:
+      type: string
+      required: true
+    access_key:
+      type: string
+      required: true
+    storage_bucket_name:
+      type: string
+      required: true
+      constraints:
+        - pattern: "[-a-zA-Z0-9_]+"
+      description: "Name of the GPC Bucket where cleaned data are stored"
+    project_name:
+      type: string
+      required: true
+      description: "Name of the GCP project where results are stored"
+  node_templates:
+    DataCleanerJobUnit:
+      metadata:
+        a4c_edit_x: 104
+        a4c_edit_y: "-102"
+      type: org.alien4cloud.extended.container.types.ContainerJobUnit
+    DataCleanerContainerRuntime:
+      type: org.alien4cloud.extended.container.types.ContainerRuntime
+      requirements:
+        - hostedOnDataCleanerJobUnitHost:
+            type_requirement: host
+            node: DataCleanerJobUnit
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+    DataCleaner:
+      type: org.ystia.yorc.samples.text-processing-demo.nodes.DataCleaner
+      properties:
+        file_url: { get_input: file_url }
+        storage_bucket_name: { get_input: storage_bucket_name }
+        storage_bucket_mount_path: "/tmp/mnt_bucket"
+        cpu_share: 0.1
+        mem_share: "128 MB"
+      requirements:
+        - hostedOnContainerRuntimeDataCleanerContainerRuntimeHost:
+            type_requirement: host
+            node: DataCleanerContainerRuntime
+            capability: org.alien4cloud.extended.container.capabilities.ApplicationHost
+            relationship: org.alien4cloud.extended.container.relationships.HostedOnContainerRuntime
+    SummarizerJobUnit:
+      metadata:
+        a4c_edit_x: 117
+        a4c_edit_y: 127
+      type: org.alien4cloud.extended.container.types.ContainerJobUnit
+    TranslatorJobUnit:
+      metadata:
+        a4c_edit_x: 116
+        a4c_edit_y: 391
+      type: org.alien4cloud.extended.container.types.ContainerJobUnit
+    SummarizerContainerRuntime:
+      type: org.alien4cloud.extended.container.types.ContainerRuntime
+      requirements:
+        - hostedOnSummarizerJobUnitHost:
+            type_requirement: host
+            node: SummarizerJobUnit
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+    TranslatorContainerRuntime:
+      type: org.alien4cloud.extended.container.types.ContainerRuntime
+      requirements:
+        - hostedOnTranslatorJobUnitHost:
+            type_requirement: host
+            node: TranslatorJobUnit
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+    Summarizer:
+      type: org.ystia.yorc.samples.text-processing-demo.nodes.Summarizer
+      properties:
+        project_name: { get_input: project_name }
+        storage_bucket_name: { get_input: storage_bucket_name }
+        cpu_share: 0.1
+        mem_share: "128 MB"
+      requirements:
+        - hostedOnContainerRuntimeSummarizerContainerRuntimeHost:
+            type_requirement: host
+            node: SummarizerContainerRuntime
+            capability: org.alien4cloud.extended.container.capabilities.ApplicationHost
+            relationship: org.alien4cloud.extended.container.relationships.HostedOnContainerRuntime
+        - dependsOnDataCleanerFeature:
+            type_requirement: dependency
+            node: DataCleaner
+            capability: tosca.capabilities.Node
+            relationship: tosca.relationships.DependsOn
+    Translator:
+      type: org.ystia.yorc.samples.text-processing-demo.nodes.Translator
+      properties:
+        storage_bucket_name: { get_input: storage_bucket_name }
+        storage_bucket_mount_path: "/tmp/mnt_bucket"
+        cpu_share: 0.1
+        mem_share: "128 MB"
+      requirements:
+        - hostedOnContainerRuntimeTranslatorContainerRuntimeHost:
+            type_requirement: host
+            node: TranslatorContainerRuntime
+            capability: org.alien4cloud.extended.container.capabilities.ApplicationHost
+            relationship: org.alien4cloud.extended.container.relationships.HostedOnContainerRuntime
+        - dependsOnSummarizerFeature:
+            type_requirement: dependency
+            node: Summarizer
+            capability: tosca.capabilities.Node
+            relationship: tosca.relationships.DependsOn
+    DataPublisherCompute:
+      metadata:
+        a4c_edit_x: "-356"
+        a4c_edit_y: 333
+      type: tosca.nodes.Compute
+    TranslatorSecretsVolume:
+      type: org.alien4cloud.nodes.DockerExtVolume
+      requirements:
+        - hostedOnSummarizerJobUnitHost:
+            type_requirement: host
+            node: SummarizerJobUnit
+            capability: tosca.capabilities.Container.Docker
+            relationship: tosca.relationships.HostedOn
+        - mountDockerVolumeSummarizerAttach:
+            type_requirement: attachment
+            node: Summarizer
+            capability: org.alien4cloud.capabilities.DockerVolumeAttachment
+            relationship: org.alien4cloud.relationships.MountDockerVolume
+            properties:
+              container_path: "/mnt"
+              readonly: false
+    DataPublisher:
+      type: org.ystia.yorc.samples.text-processing-demo.ansible.nodes.DataPublisher
+      properties:
+        access_key: { get_input: access_key }
+        secret_key: { get_input: secret_key }
+        bucket_name: { get_input: storage_bucket_name }
+      requirements:
+        - hostedOnDataPublisherComputeHost:
+            type_requirement: host
+            node: DataPublisherCompute
+            capability: tosca.capabilities.Container
+            relationship: tosca.relationships.HostedOn
+        - dependsOnTranslatorFeature:
+            type_requirement: dependency
+            node: Translator
+            capability: tosca.capabilities.Node
+            relationship: tosca.relationships.DependsOn
+
+  outputs:
+    DataPublisher_url:
+      value: { get_attribute: [ DataPublisher, url ] }

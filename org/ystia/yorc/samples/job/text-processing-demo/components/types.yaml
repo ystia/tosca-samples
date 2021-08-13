@@ -1,0 +1,168 @@
+tosca_definitions_version: alien_dsl_2_0_0
+
+metadata:
+  template_name: org.ystia.yorc.samples.text-processing-demo
+  template_version: 1.0.0-SNAPSHOT
+  template_author: Yorc team
+
+imports:
+  - tosca-normative-types:1.0.0-ALIEN20
+  - docker-types:3.0.0
+  - yorc-types:1.1.0
+  - alien-base-types:3.0.0
+
+description: Contains types for testing Jobs on Kubernetes & Slurm/Singularity
+
+repositories:
+  docker:
+    url: https://hub.docker.com/
+    type: a4c_ignore
+
+node_types:
+  org.ystia.yorc.samples.text-processing-demo.nodes.DataCleaner:
+    derived_from: tosca.nodes.Container.Application.DockerContainer
+    properties:
+      file_url:
+        type: string
+        description: URL of the file to download
+        required: true
+        constraints:
+          - pattern: "https?://.+"
+      storage_bucket_name:
+        type: string
+        description: Name of the GPC Bucket where cleaned data are stored
+        required: true
+        constraints:
+          - pattern: "[-a-zA-Z0-9_]+"
+      storage_bucket_mount_path:
+        type: string
+        description: Path used to mount the GCP Bucket using gcsfuse
+        required: true
+      docker_run_args:
+        type: list
+        entry_schema:
+          type: string
+        default: ["-c",  "/usr/local/bin/setup-gcsfuse.sh && mkdir -p \"${GCS_MOUNT_DIR}/text-processing\" && curl \"${DL_URL}\" -o \"${GCS_MOUNT_DIR}/text-processing/init_file.txt\" && /usr/local/bin/clean-data.sh \"${GCS_MOUNT_DIR}/text-processing/init_file.txt\" \"${GCS_MOUNT_DIR}/text-processing/cleaned_data.txt\""]
+      docker_run_cmd:
+        type: string
+        required: false
+        description: Docker run command. Will override the Dockerfile CMD statement.
+        default: "/bin/bash"
+    interfaces:
+      Standard:
+        create:
+          inputs:
+            ENV_DL_URL: { get_property: [SELF, file_url]}
+            ENV_GCS_BUCKET_NAME: { get_property: [SELF, storage_bucket_name]}
+            ENV_GCS_MOUNT_DIR: { get_property: [SELF, storage_bucket_mount_path]}
+          implementation:
+            file: "ystia/samples-text-processing:latest"
+            repository: docker
+            type: tosca.artifacts.Deployment.Image.Container.Docker
+
+  org.ystia.yorc.samples.text-processing-demo.nodes.Summarizer:
+    derived_from: tosca.nodes.Container.Application.DockerContainer
+    properties:
+      project_name:
+        type: string
+        description: Name of the GCP project where results are stored
+        required: true
+      storage_bucket_name:
+        type: string
+        description: Name of the GCP Storage Bucket
+        required: true
+        constraints:
+          - pattern: "[-a-zA-Z0-9_]+"
+      docker_run_args:
+        type: list
+        entry_schema:
+          type: string
+        default: ["-c",  "gcloud auth activate-service-account --key-file /mnt/certs/svc_account.json || { echo \"GCP login failed\"; exit 1; }; gsutil cp gs://${BUCKET_NAME}/text-processing/cleaned_data.txt /tmp/cleaned_data.txt && /usr/local/bin/summarize.py /tmp/cleaned_data.txt > /tmp/summarized_data.txt && gsutil cp /tmp/summarized_data.txt gs://${BUCKET_NAME}/text-processing/summarized_data.txt"]
+      docker_run_cmd:
+        type: string
+        required: false
+        description: Docker run command. Will override the Dockerfile CMD statement.
+        default: "/bin/bash"
+    interfaces:
+      Standard:
+        create:
+          inputs:
+            ENV_CLOUDSDK_CORE_PROJECT: { get_property: [SELF, project_name]}
+            ENV_BUCKET_NAME: { get_property: [SELF, storage_bucket_name]}
+          implementation:
+            file: "ystia/samples-text-processing:latest"
+            repository: docker
+            type: tosca.artifacts.Deployment.Image.Container.Docker
+
+  org.ystia.yorc.samples.text-processing-demo.nodes.Translator:
+    derived_from: tosca.nodes.Container.Application.DockerContainer
+    properties:
+      storage_bucket_name:
+        type: string
+        description: Name of the GPC Bucket where cleaned data are stored
+        required: true
+        constraints:
+          - pattern: "[-a-zA-Z0-9_]+"
+      storage_bucket_mount_path:
+        type: string
+        description: Path used to mount the GCP Bucket using gcsfuse
+      docker_run_args:
+        type: list
+        entry_schema:
+          type: string
+        default: ["-c",  "/usr/local/bin/setup-gcsfuse.sh &&  /usr/local/bin/g-translate.py \"${GCS_MOUNT_DIR}/text-processing/summarized_data.txt\" > \"${GCS_MOUNT_DIR}/text-processing/translated_data.txt\""]
+      docker_run_cmd:
+        type: string
+        required: false
+        description: Docker run command. Will override the Dockerfile CMD statement.
+        default: "/bin/bash"
+    interfaces:
+      Standard:
+        create:
+          inputs:
+            ENV_GCS_BUCKET_NAME: { get_property: [SELF, storage_bucket_name]}
+            ENV_GCS_MOUNT_DIR: { get_property: [SELF, storage_bucket_mount_path]}
+          implementation:
+            file: "ystia/samples-text-processing:latest"
+            repository: docker
+            type: tosca.artifacts.Deployment.Image.Container.Docker
+
+
+  org.ystia.yorc.samples.text-processing-demo.ansible.nodes.DataPublisher:
+    derived_from: org.alien4cloud.nodes.Job
+    metadata:
+      icon: /icons/DataPublisher-icon.png
+    properties:
+      access_key:
+        type: string
+        required: true
+      secret_key:
+        type: string
+        required: true
+      bucket_name:
+        type: string
+        description: Name of the GCP Storage Bucket
+        required: true
+        constraints:
+          - pattern: "[-a-zA-Z0-9_]+"
+    attributes:
+      url: {concat: ["http://", get_attribute: [HOST, public_address], "/results/"]}
+    requirements:
+      - host:
+          capability: tosca.capabilities.Container
+          node: tosca.nodes.Compute
+          relationship: tosca.relationships.HostedOn
+          occurrences: [1, 1]
+    interfaces:
+      Standard:
+        create: "playbooks/create-downloader.yaml"
+      tosca.interfaces.node.lifecycle.Runnable:
+        submit:
+          inputs:
+            GS_ACCESS_KEY: { get_property: [SELF, access_key]}
+            GS_SECRET_KEY: { get_property: [SELF, secret_key]}
+            BUCKET_NAME: { get_property: [SELF, bucket_name]}
+          implementation: "playbooks/submit-downloader.yaml"
+        run: "playbooks/run-downloader.yaml"
+
+

@@ -1,0 +1,45 @@
+- name: Create
+  hosts: all
+  strategy: free
+  become: true
+
+  tasks:
+    - name: Download Init file
+      gc_storage:
+        bucket: "{{BUCKET_NAME}}"
+        object: "text-processing/init_file.txt"
+        dest: /var/www/html/results/result-init_file.txt
+        mode: get
+        gs_access_key: "{{GS_ACCESS_KEY}}"
+        gs_secret_key: "{{GS_SECRET_KEY}}"
+
+    - name: Download Cleaned File
+      gc_storage:
+        bucket: "{{BUCKET_NAME}}"
+        object: "text-processing/cleaned_data.txt"
+        dest: /var/www/html/results/result-cleaned_data.txt
+        mode: get
+        gs_access_key: "{{GS_ACCESS_KEY}}"
+        gs_secret_key: "{{GS_SECRET_KEY}}"
+
+    - name: Download Summarized file
+      gc_storage:
+        bucket: "{{BUCKET_NAME}}"
+        object: "text-processing/summarized_data.txt"
+        dest: /var/www/html/results/result-summarized_data.txt
+        mode: get
+        gs_access_key: "{{GS_ACCESS_KEY}}"
+        gs_secret_key: "{{GS_SECRET_KEY}}"
+
+    - name: Download Translated file
+      gc_storage:
+        bucket: "{{BUCKET_NAME}}"
+        object: "text-processing/translated_data.txt"
+        dest: /var/www/html/results/result-translated_data.txt
+        mode: get
+        gs_access_key: "{{GS_ACCESS_KEY}}"
+        gs_secret_key: "{{GS_SECRET_KEY}}"
+
+    - name: Set JobID
+      set_fact:
+        TOSCA_JOB_ID: "1"

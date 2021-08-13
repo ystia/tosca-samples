@@ -1,0 +1,25 @@
+- name: Create
+  hosts: all
+  strategy: free
+  become: true
+
+  tasks:
+    - yum:
+        name:
+        - gcc
+        - make
+        - python2
+        - python2-devel
+        - python-pip
+        - httpd
+        state: present
+    - systemd:
+        name: httpd
+        state: started
+        daemon_reload: yes
+    - file:
+        path: /var/www/html/results
+        state: directory
+    - pip:
+        name: boto
+
