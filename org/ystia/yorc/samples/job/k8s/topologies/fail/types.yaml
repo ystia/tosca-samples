@@ -30,15 +30,12 @@ topology_template:
     ComputeFail:
       type: org.ystia.yorc.samples.kube.containers.nodes.ComputeFail
       properties:
-        docker_run_cmd:
-          - "/bin/bash"
-          - "-c"
-          - "sleep 10; >&2 echo 'Computation Failed!'; exit 1"
+        docker_run_cmd: "/bin/bash"
         cpu_share: 1.0
         mem_share: "128 MB"
-        docker_bash_cmd:
-          - "/bin/bash"
+        docker_run_args:
           - "-c"
+          - "sleep 10; >&2 echo 'Computation Failed!'; exit 1"
       requirements:
         - hostedOnContainerRuntimeContainerRuntimeHost:
             type_requirement: host

@@ -17,11 +17,11 @@ repositories:
     type: a4c_ignore
 
 node_types:
-  org.ystia.yorc.samples.kube.containers.nodes.Apache:
+  org.ystia.yorc.samples.kube.apache.nodes.Apache:
     derived_from: tosca.nodes.Container.Application.DockerContainer
     capabilities:
       http_endpoint:
-        type: org.ystia.yorc.samples.kube.containers.capabilities.Http
+        type: org.ystia.yorc.samples.kube.apache.capabilities.Http
     interfaces:
       Standard:
         create:
@@ -31,7 +31,7 @@ node_types:
             type: tosca.artifacts.Deployment.Image.Container.Docker
 
 capability_types:
-  org.ystia.yorc.samples.kube.containers.capabilities.Http:
+  org.ystia.yorc.samples.kube.apache.capabilities.Http:
     derived_from: tosca.capabilities.Endpoint
     properties:
       docker_bridge_port_mapping:

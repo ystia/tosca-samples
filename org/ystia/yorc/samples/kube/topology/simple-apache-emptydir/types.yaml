@@ -24,7 +24,7 @@ topology_template:
             node: Deployment
             capability: tosca.capabilities.Container.Docker
     Apache:
-      type: org.ystia.yorc.samples.kube.containers.nodes.Apache
+      type: org.ystia.yorc.samples.kube.apache.nodes.Apache
       requirements:
         - hostedOnContainerRuntimeContainer:
             type_requirement: host

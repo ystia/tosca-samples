@@ -30,16 +30,13 @@ topology_template:
     ComputePIJob:
       type: org.ystia.yorc.samples.kube.containers.nodes.ComputePIJob
       properties:
-        docker_run_cmd:
-          - perl
+        docker_run_cmd: "perl"
+        docker_run_args:
           - "-Mbignum=bpi"
           - "-wle"
           - "print bpi(2000)"
         cpu_share: 1.0
         mem_share: "128 MB"
-        docker_bash_cmd:
-          - "/bin/bash"
-          - "-c"
       requirements:
         - hostedOnContainerRuntimeContainerRuntimeHost:
             type_requirement: host
